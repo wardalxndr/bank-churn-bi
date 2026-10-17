@@ -1,0 +1,26 @@
+{
+  "note": "20 pertanyaan emas buat eval Text to SQL. Hit kalau SQL jalan dan angka dalam toleransi. Angka referensi dari reports/stats.json.",
+  "tolerance_pct": 5,
+  "questions": [
+    {"id": "Q01", "q": "Berapa total nasabah?", "expect_table": "mart_customer", "expect_approx": 10000},
+    {"id": "Q02", "q": "Berapa churn rate keseluruhan?", "expect_table": "mart_customer", "expect_approx": 0.2037},
+    {"id": "Q03", "q": "Berapa jumlah nasabah yang churn?", "expect_table": "mart_customer", "expect_approx": 2037},
+    {"id": "Q04", "q": "Geography mana dengan churn rate tertinggi?", "expect_table": "mart_customer", "expect_text": "Germany"},
+    {"id": "Q05", "q": "Berapa churn rate di Germany?", "expect_table": "mart_customer", "expect_approx": 0.3244},
+    {"id": "Q06", "q": "Berapa churn rate di France?", "expect_table": "mart_customer", "expect_approx": 0.1615},
+    {"id": "Q07", "q": "Berapa churn rate di Spain?", "expect_table": "mart_customer", "expect_approx": 0.1667},
+    {"id": "Q08", "q": "Berapa churn rate nasabah inactive?", "expect_table": "mart_customer", "expect_approx": 0.2685},
+    {"id": "Q09", "q": "Berapa churn rate nasabah active?", "expect_table": "mart_customer", "expect_approx": 0.1427},
+    {"id": "Q10", "q": "Berapa churn rate nasabah dengan 1 produk?", "expect_table": "mart_customer", "expect_approx": 0.2771},
+    {"id": "Q11", "q": "Berapa churn rate nasabah dengan 2 produk?", "expect_table": "mart_customer", "expect_approx": 0.0758},
+    {"id": "Q12", "q": "Jumlah produk berapa yang churn rate nya paling tinggi?", "expect_table": "mart_customer", "expect_text": "4"},
+    {"id": "Q13", "q": "Berapa isi save list?", "expect_table": "save_list", "expect_approx": 500},
+    {"id": "Q14", "q": "Berapa nasabah save list dengan risk minimal 8?", "expect_table": "save_list", "expect_approx": 437},
+    {"id": "Q15", "q": "Apa alasan paling umum di save list?", "expect_table": "save_list", "expect_text": "inactive+single_product+new_tenure"},
+    {"id": "Q16", "q": "Berapa rata rata umur nasabah yang churn?", "expect_table": "mart_customer", "expect_approx": 44.8},
+    {"id": "Q17", "q": "Berapa rata rata umur nasabah yang stay?", "expect_table": "mart_customer", "expect_approx": 37.4},
+    {"id": "Q18", "q": "Berapa churn rate bucket tenure 0 sampai 2 tahun?", "expect_table": "mart_cohort", "expect_approx": 0.2115},
+    {"id": "Q19", "q": "Berapa nasabah dormant risk di mart_customer?", "expect_table": "mart_customer", "expect_approx": 3547},
+    {"id": "Q20", "q": "Berapa churn rate nasabah perempuan?", "expect_table": "mart_customer", "expect_approx": 0.2507}
+  ]
+}

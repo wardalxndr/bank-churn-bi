@@ -3,14 +3,16 @@
 Run: streamlit run dashboard/app.py
 Data: pipeline/make_dashboard_data.py -> data/dashboard_data.json
 """
+from contextlib import contextmanager
 import json
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-ROOT = Path = __import__("pathlib").Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "dashboard_data.json"
 
 BLUE = "#2F6BF0"
@@ -106,12 +108,12 @@ def fmt_pct(p, dec=1):
 
 
 @st.cache_data
-def load():
-    with DATA.open(encoding="utf-8") as f:
+def load(path):
+    with Path(path).open(encoding="utf-8") as f:
         return json.load(f)
 
 
-data = load()
+data = load(DATA)
 snap = data["kpis"]
 customers = pd.DataFrame(data["customers"])
 save = pd.DataFrame(data["save_list"])
@@ -250,21 +252,19 @@ def reasons_chart():
     return fig
 
 
-def card_open():
-    return st.container(border=True)
-
-
-def tile_open(title, note=None, align_note=False):
-    card_open()
-    if note:
-        h1, h2 = st.columns([.72, .28])
-        h1.markdown(f'<div class="tile-title">{title}</div>',
-                    unsafe_allow_html=True)
-        h2.markdown(f'<div class="tile-note" style="text-align:right;'
-                    f'margin-top:3px">{note}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="tile-title">{title}</div>',
-                    unsafe_allow_html=True)
+@contextmanager
+def tile_open(title, note=None):
+    with st.container(border=True):
+        if note:
+            h1, h2 = st.columns([.72, .28])
+            h1.markdown(f'<div class="tile-title">{title}</div>',
+                        unsafe_allow_html=True)
+            h2.markdown(f'<div class="tile-note" style="text-align:right;'
+                        f'margin-top:3px">{note}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="tile-title">{title}</div>',
+                        unsafe_allow_html=True)
+        yield
 
 
 # ---------- sidebar nav ----------
@@ -338,86 +338,81 @@ st.write("")
 # ---------- row: map + donut ----------
 m1, m2 = st.columns([.54, .46], gap="small")
 with m1:
-    tile_open("Churn rate by country", "3 countries in dataset")
-    c_map, c_leg = st.columns([.62, .38], gap="small")
-    c_map.plotly_chart(map_chart(), width="stretch",
-                       config={"displayModeBar": False})
-    with c_leg:
-        shades = [RAMP[0], RAMP[2], RAMP[2]]
-        for (g, r), col in zip(geo_rate.items(),
-                               [RAMP[0], RAMP[3], RAMP[3]]):
-            st.markdown(
-                f'<div class="mrow"><span><span class="dot" '
-                f'style="background:{col}"></span>{g}</span>'
-                f'<span class="n">{fmt_pct(r)}</span></div>',
-                unsafe_allow_html=True)
-        st.write("")
-        st.markdown('<div class="pill">Germany churns about 2x the rate of '
-                    'France and Spain.</div>', unsafe_allow_html=True)
-    st.caption("")
+    with tile_open("Churn rate by country", "3 countries in dataset"):
+        c_map, c_leg = st.columns([.62, .38], gap="small")
+        c_map.plotly_chart(map_chart(), width="stretch",
+                           config={"displayModeBar": False})
+        with c_leg:
+            for (g, r), col in zip(geo_rate.items(),
+                                   [RAMP[0], RAMP[3], RAMP[3]]):
+                st.markdown(
+                    f'<div class="mrow"><span><span class="dot" '
+                    f'style="background:{col}"></span>{g}</span>'
+                    f'<span class="n">{fmt_pct(r)}</span></div>',
+                    unsafe_allow_html=True)
+            st.write("")
+            st.markdown('<div class="pill">Germany churns about 2x the rate '
+                        'of France and Spain.</div>', unsafe_allow_html=True)
 
 with m2:
-    tile_open("Churned customers by product")
-    d1, d2 = st.columns([.52, .48], gap="small")
-    d1.plotly_chart(donut_chart(), width="stretch",
-                    config={"displayModeBar": False})
-    with d2:
-        n_total = int(prod_counts.sum())
-        for (n_prod, n_cust), col in zip(prod_counts.items(),
-                                         [RAMP[0], RAMP[1], RAMP[2], RAMP[4]]):
-            share = n_cust / n_total
-            st.markdown(
-                f'<div class="mrow"><span><span class="dot" '
-                f'style="background:{col}"></span>'
-                f'{n_prod} product{"s" if n_prod > 1 else ""}</span>'
-                f'<span class="n">{fmt_int(n_cust)} '
-                f'({fmt_pct(share, 0)})</span></div>', unsafe_allow_html=True)
-        st.write("")
-        st.markdown('<div class="pill">69% held only one product.</div>',
-                    unsafe_allow_html=True)
-    st.caption("")
+    with tile_open("Churned customers by product"):
+        d1, d2 = st.columns([.52, .48], gap="small")
+        d1.plotly_chart(donut_chart(), width="stretch",
+                        config={"displayModeBar": False})
+        with d2:
+            n_total = int(prod_counts.sum())
+            for (n_prod, n_cust), col in zip(
+                    prod_counts.items(), [RAMP[0], RAMP[1], RAMP[2], RAMP[4]]):
+                share = n_cust / n_total
+                st.markdown(
+                    f'<div class="mrow"><span><span class="dot" '
+                    f'style="background:{col}"></span>'
+                    f'{n_prod} product{"s" if n_prod > 1 else ""}</span>'
+                    f'<span class="n">{fmt_int(n_cust)} '
+                    f'({fmt_pct(share, 0)})</span></div>', unsafe_allow_html=True)
+            st.write("")
+            st.markdown('<div class="pill">69% held only one product.</div>',
+                        unsafe_allow_html=True)
 st.write("")
 
 # ---------- row: inactive vs active + tenure line ----------
 g1, g2 = st.columns(2, gap="small")
 with g1:
-    tile_open("Churn rate: inactive vs active")
-    st.plotly_chart(col_chart(), width="stretch",
-                    config={"displayModeBar": False})
-    st.caption("")
+    with tile_open("Churn rate: inactive vs active"):
+        st.plotly_chart(col_chart(), width="stretch",
+                        config={"displayModeBar": False})
 with g2:
-    tile_open("Churn rate by tenure bucket", "Tenure barely moves the needle")
-    st.plotly_chart(tenure_chart(), width="stretch",
-                    config={"displayModeBar": False})
-    st.caption("")
+    with tile_open("Churn rate by tenure bucket",
+                   "Tenure barely moves the needle"):
+        st.plotly_chart(tenure_chart(), width="stretch",
+                        config={"displayModeBar": False})
 st.write("")
 
 # ---------- row: worklist + reasons ----------
 w1, w2 = st.columns([.55, .45], gap="small")
 with w1:
-    tile_open("Call worklist", "top 50 of 500, sort by risk score")
-    rows = save.sort_values(["risk", "CustomerId"],
-                            ascending=[False, True]).head(50)
-    body = ""
-    for _, r in rows.iterrows():
-        a = .10 + .30 * (r["risk"] - 7) / 3
-        chip = (f'<span class="chip" style="background:rgba(47,107,240,'
-                f'{a:.2f})">{int(r["risk"])}</span>')
-        body += (f"<tr><td>{r['CustomerId']}</td><td>{r['Geography']}</td>"
-                 f"<td>{int(r['NumOfProducts'])}</td>"
-                 f"<td>{int(r['Tenure'])}y</td><td>{chip}</td></tr>")
-    st.markdown(
-        f'<div class="worklist"><table><thead><tr><th>Customer ID</th>'
-        f'<th>Country</th><th>Products</th><th>Tenure</th>'
-        f'<th>Risk score</th></tr></thead><tbody>{body}</tbody></table>'
-        f'</div>', unsafe_allow_html=True)
+    with tile_open("Call worklist", "top 50 of 500, sort by risk score"):
+        rows = save.sort_values(["risk", "CustomerId"],
+                                ascending=[False, True]).head(50)
+        body = ""
+        for _, r in rows.iterrows():
+            a = .10 + .30 * (r["risk"] - 7) / 3
+            chip = (f'<span class="chip" style="background:rgba(47,107,240,'
+                    f'{a:.2f})">{int(r["risk"])}</span>')
+            body += (f"<tr><td>{r['CustomerId']}</td><td>{r['Geography']}</td>"
+                     f"<td>{int(r['NumOfProducts'])}</td>"
+                     f"<td>{int(r['Tenure'])}y</td><td>{chip}</td></tr>")
+        st.markdown(
+            f'<div class="worklist"><table><thead><tr><th>Customer ID</th>'
+            f'<th>Country</th><th>Products</th><th>Tenure</th>'
+            f'<th>Risk score</th></tr></thead><tbody>{body}</tbody></table>'
+            f'</div>', unsafe_allow_html=True)
 
 with w2:
-    tile_open("Top 5 churn reasons",
-              f"{fmt_pct(TOP_N / SAVE_N, 0)} = {reason_en}")
-    st.plotly_chart(reasons_chart(), width="stretch",
-                    config={"displayModeBar": False})
-    st.caption("")
+    with tile_open("Top 5 churn reasons",
+                   f"{fmt_pct(TOP_N / SAVE_N, 0)} = {reason_en}"):
+        st.plotly_chart(reasons_chart(), width="stretch",
+                        config={"displayModeBar": False})
 
 st.write("")
 st.markdown('<div class="footer">Source: Kaggle Churn Modelling (10,000 '

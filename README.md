@@ -20,9 +20,14 @@ Streamlit + Groq + MinSearch (AI Q&A), Kestra daily (automation).
 2. Data: `data/bank_churn_raw.csv` (Kaggle Bank Customer Churn, see `data/README.md`)
 3. `python pipeline/build_marts.py` -> 3 marts + `save_list.xlsx`
 4. `python pipeline/stats.py` -> numbers for the memo (`reports/stats.json`)
-5. Dashboard: `python pipeline/export_pack.py` -> `data/dashboard_pack.xlsx`,
-   then follow `dashboard/build_guide.md` (Looker Studio via Google Sheets)
-6. AI Q&A: set `GROQ_API_KEY`, then `streamlit run ai/app.py` (run from repo root).
+5. Decision dashboard (Streamlit): `streamlit run dashboard/app.py` -> verdict
+   callout + KPI + geo + product mix + worklist 500 sorted by risk.
+   `data/dashboard_data.json` is committed, so it runs out of the box;
+   rebuild it with `python pipeline/make_dashboard_data.py`.
+6. Dashboard in Looker Studio: `python pipeline/export_pack.py` ->
+   `data/dashboard_pack.xlsx`, then follow `dashboard/build_guide.md`
+   (Looker Studio via Google Sheets)
+7. AI Q&A: set `GROQ_API_KEY`, then `streamlit run ai/app.py` (run from repo root).
    Model default `openai/gpt-oss-120b`; ganti kapan saja lewat `GROQ_MODEL` kalau
    Groq pensiunin modelnya.
 
@@ -41,6 +46,7 @@ Streamlit + Groq + MinSearch (AI Q&A), Kestra daily (automation).
 - [x] verified pipeline + stats (`reports/stats.json`)
 - [x] Text-to-SQL demo with guardrails + 20 gold questions (`ai/`)
 - [x] dashboard build guide + one file import pack (`dashboard/`)
+- [x] decision-first Streamlit dashboard: verdict + worklist 500 (`dashboard/app.py`)
 - [ ] Looker dashboard live link (next)
 - [ ] AI eval scores written to `reports/qa_eval.json` (next)
 
@@ -48,7 +54,7 @@ Streamlit + Groq + MinSearch (AI Q&A), Kestra daily (automation).
 
 - `data/` raw + marts output (gitignored CSVs, committed README)
 - `sql/` 3 hero queries: cohort churn, drivers, save list
-- `pipeline/` mart builder + Excel export + stats
-- `dashboard/` Looker 1-page spec + Excel pivot spec
+- `pipeline/` mart builder + dashboard data pack + Excel export + stats
+- `dashboard/` Streamlit 1-page app (`app.py`) + Looker build guide + pivot spec
 - `ai/` Text-to-SQL app (core + streamlit), spec, 20 gold questions
 - `reports/` metrics + stats + memos
